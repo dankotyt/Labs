@@ -1,0 +1,116 @@
+#include <iostream>
+#include <time.h>
+
+using namespace std;
+
+int main()
+{
+
+    srand(time(0));
+    int N1 = 10;
+    int N2 = 15;
+    int first_positive_index = -1;
+    int A[N1], B[N2];
+
+    cout << "A[N1]: ";
+    for(int i=0; i<N1; i++){
+        A[i] = rand()%10-3;
+        cout << A[i] << " ";
+    }
+
+    for(int i = 0; i<N1; i++){
+        if(A[i]>0){
+            first_positive_index = i;
+            break;
+        }
+    }
+
+    cout << endl << "first_positive_index: "<<first_positive_index << "\n";
+
+    if(first_positive_index == -1){
+        cout << endl<< "The massive don`t have any positive numbers!";
+    }
+
+    // Вычисление размеров левой и правой частей массива
+    int leftA = first_positive_index;
+    int rightA = N1-first_positive_index-1;
+    int left[leftA], right[rightA];
+
+    // Заполнение левой части массива (элементы до первого положительного)
+    for (int i = 0; i < leftA; ++i) {
+        left[i] = A[i];
+    }
+
+    // Заполнение правой части массива (элементы после первого положительного)
+    for (int i = first_positive_index; i < N1; ++i) {
+        right[i - first_positive_index - 1] = A[i];
+    }
+
+    int minVolue;
+    std::cout << "Left part: ";
+    for (int i = 0; i < leftA; ++i) {
+        std::cout << left[i] << " ";
+        if(minVolue>left[i]){
+            minVolue = left[i];
+        }
+    }
+    std::cout << "\n";
+
+    std::cout << "Right part: ";
+    for (int i = 0; i < rightA; ++i) {
+        std::cout << right[i] << " ";
+    }
+    std::cout << "\n";
+
+    cout<<endl<< "minVolue in Left part: " << minVolue;
+}
+
+
+// 2 задание =================================================================
+
+#include <iostream>
+#include <limits>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+const int N = 6;
+const int M = 7;
+
+int findMinPositive(int Matrix[], int N, int M, int tcol) {
+    int min_pos = numeric_limits<int>::max();
+    
+    for (int i = N/2; i < N; i++) {
+        int val = Matrix[i*M+tcol];
+        if (val > 0 && val < min_pos) {
+            min_pos = val;
+        }
+    }
+    
+    return (min_pos == numeric_limits<int>::max()) ? -1 : min_pos;
+}
+
+int main() {
+    int Matrix[N][M];
+    srand(time(0));
+    
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
+            Matrix[i][j] = rand() % 10 - 4;
+            cout << Matrix[i][j] << "\t";
+        }
+        cout << endl;
+    }
+    
+    for (int j = 0; j < M; j++) {
+        int min_pos = findMinPositive(&Matrix[0][0], N, M, j);
+        if (min_pos != -1) {
+            cout << "Minimum positive value in column " << j << " is " << min_pos << endl;
+        } else {
+            cout << "No positive value in column " << j << endl;
+        }
+    }
+    
+    return 0;
+}

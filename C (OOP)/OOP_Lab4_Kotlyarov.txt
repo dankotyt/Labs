@@ -1,0 +1,91 @@
+// 1 задание
+#include<iostream>
+#include <time.h>
+using namespace std;
+
+const int MAX_N = 100;
+
+int matrix[MAX_N][MAX_N]; 
+
+double* getRowAverages(int n) { // Get row averages
+    double* rowAvgs = new double[n]; 
+    for (int i = 0; i < n; i++) {
+        int sum = 0;
+        for (int j = 0; j < n; j++) {
+            sum += matrix[i][j];
+        }
+        rowAvgs[i] = (double)sum / n; 
+    }
+    return rowAvgs;
+}
+
+int main() {
+    srand(time(0));
+    int n; 
+    cout << "Enter the N: ";
+    cin >> n; 
+
+    std::cout << "Matrix" << std::endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = rand() % 10 - 2;
+            cout << matrix[i][j] << "\t ";
+        }
+        cout << endl;
+    }
+
+    double* rowAverages = getRowAverages(n);
+
+    cout << "Massive of average value [ ";
+    for (int i = 0; i < n; i++) {
+        cout << rowAverages[i] << " ";
+    }
+    cout << "]";
+
+    delete[] rowAverages; // Освобождение памяти
+
+    return 0;
+}
+
+
+// 2 задание
+#include <iostream>
+using namespace std;
+
+const int MAXN = 1000;
+
+int matrix[MAXN][MAXN];
+
+pair<int, int> minMaxInArea(int n, int* minVal, int* maxVal) {
+    *minVal = matrix[0][0];
+    *maxVal = matrix[n-1][n-1];
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            if (i <= j && i+j <= n-1) { // Проверяем, попадает ли (i,j) в заштрихованную область
+                *minVal = min(*minVal, matrix[i][j]);
+                *maxVal = max(*maxVal, matrix[i][j]);
+            }
+        }
+    }
+
+    return make_pair(*minVal, *maxVal);
+}
+
+int main() {
+    srand(time(0));
+    int n=8;
+    std::cout << "Matrix" << std::endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = rand() % 10 - 2;
+            cout << matrix[i][j] << "\t ";
+        }
+        cout << endl;
+    }
+    int maxVal, minVal;
+    pair<int, int> result = minMaxInArea(n, &minVal, &maxVal);
+    cout << "Minimum value: " << result.first << endl;
+    cout << "Maximum value: " << result.second << endl;
+    return 0;
+}

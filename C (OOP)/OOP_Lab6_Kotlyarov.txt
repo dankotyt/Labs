@@ -1,0 +1,130 @@
+#include <iostream>
+
+using namespace std;
+
+struct deposit {
+    int accountNumber;
+    char* lastName;
+    char* firstName;
+    double balance;
+};
+
+void addNewDeposit(deposit* deposit_list, int& n) {
+    int accountNumber;
+    char* lastName = new char[50];
+    char* firstName = new char[50];
+    double balance;
+
+    cout << "Enter account number: ";
+    cin >> accountNumber;
+    cout << "Enter last name: ";
+    cin >> lastName;
+    cout << "Enter first name: ";
+    cin >> firstName;
+    cout << "Enter balance: ";
+    cin >> balance;
+
+    deposit_list[n].accountNumber = accountNumber;
+    deposit_list[n].lastName = lastName;
+    deposit_list[n].firstName = firstName;
+    deposit_list[n].balance = balance;
+    n++;
+}
+
+void depositInfo(deposit dep) {
+    cout << dep.accountNumber << "\t\t" << dep.lastName << "\t\t" << dep.firstName << "\t\t" << dep.balance << endl;
+}
+
+void printDeposits(deposit* deposit_list, int n) {
+    cout << "Account Number\tLast Name\tFirst Name\tAmount" << endl;
+    for (int i = 0; i < n; i++) {
+        depositInfo(deposit_list[i]);
+    }
+}
+
+void greaterThan(deposit* deposit_list, int n, double balance) {
+    cout << "Deposits with balance greater than " << balance << endl;
+    cout << "Account Number\tLast Name\tFirst Name\tAmount" << endl;
+    for (int i = 0; i < n; i++) {
+        if (deposit_list[i].balance > balance) {
+            depositInfo(deposit_list[i]);
+        }
+    }
+}
+
+void findDepositsByClient(deposit* deposit_list, int n) {
+    char* lastName = new char[50];
+    char* firstName = new char[50];
+    cout << "Enter client's last name: ";
+    cin >> lastName;
+    cout << "Enter client's first name: ";
+    cin >> firstName;
+
+    deposit* results;
+    results = new deposit[n];
+    int count = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (strcmp(deposit_list[i].lastName, lastName) == 0 && strcmp(deposit_list[i].firstName, firstName) == 0) {
+            results[count] = deposit_list[i];
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        cout << "No deposits found for client " << lastName << ", " << firstName << endl;
+    }
+    else {
+        cout << "Deposits for client " << lastName << ", " << firstName << endl;
+        cout << "Account Number\tLast Name\tFirst Name\tAmount" << endl;
+        for (int i = 0; i < count; i++) {
+            depositInfo(results[i]);
+        }
+    }
+    delete[] lastName;
+    delete[] firstName;
+    delete[] results;
+}
+
+int main() {
+    int choice = 0;
+    int n = 0;
+    double balance = 0.0;
+
+    deposit* deposit_list = new deposit[100];
+
+    while (true) {
+        cout << "\n";
+        cout << "1. Add new deposit." << endl;
+        cout << "2. Print all deposits." << endl;
+        cout << "3. Print deposits with balance greater than." << endl;
+        cout << "4. Find deposits by client." << endl;
+        cout << "5. Exit." << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            addNewDeposit(deposit_list, n);
+            break;
+        case 2:
+            printDeposits(deposit_list, n);
+            break;
+        case 3:
+            cout << "Enter balance: ";
+            cin >> balance;
+            greaterThan(deposit_list, n, balance);
+            break;
+        case 4:
+            findDepositsByClient(deposit_list, n);
+            break;
+        case 5:
+            delete[] deposit_list;
+            exit(0);
+        default:
+            cout << "Invalid choice, please try again." << endl;
+        }
+    }
+
+    return 0;
+}

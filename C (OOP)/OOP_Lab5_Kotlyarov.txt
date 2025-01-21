@@ -1,0 +1,164 @@
+//1 Р·Р°РґР°РЅРёРµ
+#include <iostream>
+#include <cstring>
+
+using namespace std;
+
+int* analyzeString(const char* str) {
+    int* result = new int[4] {0, 0, 0, 0}; // result massive
+    int len = strlen(str); //counter of symbols
+
+    for (int i = 0; i < len; i++) {
+        if (isdigit(str[i])) {
+            result[1]++;
+        }
+        else if (isspace(str[i])) {
+            result[2]++;
+        }
+        else if (iscntrl(str[i])) {
+            result[3]++;
+        }
+    }
+
+    char* token = strtok(const_cast<char*>(str), " "); //counter of words
+    while (token != NULL) {
+        result[0]++;
+        token = strtok(NULL, " ");
+    }
+
+    return result;
+}
+
+int main() {
+    char buffer[100];
+    char** lines = new char* [10];
+    int lineCount = 0;
+
+    cout << "Enter text using Latin (type 'and' to end input):\n";
+
+    do {
+        cin.getline(buffer, 100); //reads input and input lines in a dynamic character array 
+
+        if (strcmp(buffer, "and") != 0) { //find "and"
+            lines[lineCount] = new char[strlen(buffer) + 1]; //+ 1 count \0
+            strcpy(lines[lineCount], buffer); //if more than 100 symbols -> more memory
+            lineCount++;
+        }
+    } while (strcmp(buffer, "and") != 0);
+
+    // Sorting strings by number of words using bubble sort
+    for (int i = 0; i < lineCount - 1; i++) {
+        for (int j = 0; j < lineCount - i - 1; j++) {
+            int* result1 = analyzeString(lines[j]);
+            int* result2 = analyzeString(lines[j + 1]);
+
+            if (result1[0] > result2[0]) {
+                // РџРµСЂРµСЃС‚Р°РЅРѕРІРєР° СЃС‚СЂРѕРє
+                char* temp = lines[j];
+                lines[j] = lines[j + 1];
+                lines[j + 1] = temp;
+
+                // Deleting String Analysis Results
+                delete[] result1;
+                delete[] result2;
+            }
+            else {
+                delete[] result1;
+                delete[] result2;
+            }
+        }
+    }
+
+    // Output sorted rows with information about each row
+    for (int i = 0; i < lineCount; i++) {
+        int* result = analyzeString(lines[i]);
+
+        cout << lines[i] << " (words: " << result[0] << ", digits: " << result[1]
+            << ", whitespace: " << result[2] << ", control: " << result[3] << ")" << endl;
+
+        delete[] result;
+    }
+
+    // Freeing allocated memory
+    for (int i = 0; i < lineCount; i++) {
+        delete[] lines[i];
+    }
+    delete[] lines;
+
+    return 0;
+}
+
+//2 Р·Р°РґР°РЅРёРµ 
+
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+int* calculateColumnSums(int** mat, int rows, int cols, int startX, int endX, int startY, int endY) {
+    int numCols = endX - startX + 1;
+    int* sums = new int[numCols](); // Initializes the sums array to 0
+    for (int col = startX; col <= endX; col++) {
+        for (int row = startY; row <= endY; row++) {
+            sums[col - startX] += mat[row][col];
+        }
+    }
+    return sums;
+}
+
+int main() {
+    srand(time(0)); // Seed the RNG
+    int n, m;
+    cout << "Enter the number of rows: ";
+    cin >> n;
+    cout << "Enter the number of columns: ";
+    cin >> m;
+
+    // Dynamically allocate a 2D array
+    int** mat = new int*[n];
+    for (int row = 0; row < n; row++) {
+        mat[row] = new int[m];
+        for (int col = 0; col < m; col++) {
+            mat[row][col] = rand() % 10; // Fill with random values from 0 to 9
+            cout << mat[row][col] << "\t";
+        }
+        cout << endl;
+    }
+
+    // Calculate column sums in upper-left quadrant
+    int startX1 = 0;  //start, top to bottom (0 to 4 if m=8)
+    int endX1 = m / 2 - 1;  //end, bottom (4 if m=8)
+    int startY1 = 0;  //start, left to right (from 0 to 3 if n=6)
+    int endY1 = n / 2 - 1;  //end, right (3 if n=6)
+    int* sums1 = calculateColumnSums(mat, n, m, startX1, endX1, startY1, endY1);
+    
+    int startX2 = m / 2;
+    int endX2 = m - 1;
+    int startY2 = n / 2;
+    int endY2 = n - 1;
+    int* sums2 = calculateColumnSums(mat, n, m, startX2, endX2, startY2, endY2);
+
+    // Print sums in upper-left
+    cout << "Sums in upper-left quadrant:" << endl;
+    for (int col = startX1; col <= endX1; col++) {
+        cout << "Sum of column " << col + 1 << " is " << sums1[col - startX1] << endl;
+    }
+
+    
+    // Print sums in lower-right
+    cout << "Sums in lower-right quadrant:" << endl;
+    for (int col = startX2; col <= endX2; col++) {
+        cout << "Sum of column " << col + 1 << " is " << sums2[col - startX2] << endl;
+    }   
+
+    // Free memory
+    for (int row = 0; row < n; row++) {
+        delete[] mat[row];
+    }
+    delete[] mat;
+    delete[] sums1;
+    delete[] sums2;
+    
+    return 0;
+}
