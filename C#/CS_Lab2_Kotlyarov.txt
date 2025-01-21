@@ -1,0 +1,514 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace Lab1
+{
+    enum Education
+    {
+        Specialist,
+        Bachelor,
+        SecondEducation
+    }
+    public interface IDateAndCopy
+    {
+        object DeepCopy();
+        DateTime Date { get; set; }
+    }
+    public class Person : IDateAndCopy
+    {
+        private string firstName;
+        private string lastName;
+        private DateTime birthdate;
+
+        public Person(string firstName, string lastName, DateTime birthdate)
+        {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.birthdate = birthdate;
+        }
+        public string Name
+        {
+            get { return firstName; }
+            set { firstName = value; }
+        }
+        public string Surname
+        {
+            get { return lastName; }
+            set { lastName = value; }
+        }
+        public DateTime Birthdate
+        {
+            get { return birthdate; }
+            set { birthdate = value; }
+        }
+        public int BirthYear
+        {
+            get { return birthdate.Year; }
+            set { birthdate = new DateTime(value, birthdate.Month, birthdate.Day); }
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            Person otherPerson = (Person)obj;
+            return firstName == otherPerson.firstName && lastName == otherPerson.lastName && birthdate == otherPerson.birthdate;
+        }
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = hash * 23 + firstName.GetHashCode();
+            hash = hash * 23 + lastName.GetHashCode();
+            hash = hash * 23 + birthdate.GetHashCode();
+            return hash;
+        }
+        public static bool operator ==(Person person1, Person person2)
+        {
+            if (ReferenceEquals(person1, person2))
+                return true;
+
+            if (person1 is null || person2 is null)
+                return false;
+
+            return person1.Equals(person2);
+        }
+        public static bool operator !=(Person person1, Person person2)
+        {
+            return !(person1 == person2);
+        }
+        public virtual string ToShortString()
+        {
+            return $"Name: {firstName}\nSurname: {lastName}";
+        }
+        public object DeepCopy()
+        {
+            return new Person(firstName, lastName, birthdate);
+        }
+        public DateTime Date { get; set; }
+    }
+
+    //Person person1 = new Person("John", "Doe", new DateTime(1990, 1, 1));
+    //Person person2 = new Person("John", "Doe", new DateTime(1990, 1, 1));
+    //Person person3 = new Person("Jane", "Doe", new DateTime(1990, 1, 1));
+
+    //bool person1EqualsPerson2 = person1.Equals(person2); // true
+    //bool person1EqualsPerson3 = person1.Equals(person3); // false
+
+    //Console.WriteLine(person1EqualsPerson2); // true
+    //Console.WriteLine(person1EqualsPerson3); // false
+
+    //Console.WriteLine(person1 == person2); // true
+    //Console.WriteLine(person1 != person2); // false
+    class Student : Person, IEnumerable
+    {
+        private Person studentData;
+        private Education educationForm;
+        private int groupNumber;
+        private Exam[] exams = new Exam[0];
+        private ArrayList tests = new ArrayList();
+        public Student(Person studentData, Education educationForm, int groupNumber) : base(studentData.Name, studentData.Surname, studentData.Birthdate)
+        {
+            this.studentData = studentData;
+            this.educationForm = educationForm;
+            this.groupNumber = groupNumber;
+        }
+        public Student() : this(new Person("Name", "Surname", DateTime.Now), Education.Bachelor, 1)
+        {
+        }
+        public Person StudentData
+        {
+            get { return studentData; }
+            set { studentData = value; }
+        }
+        public Education Education
+        {
+            get { return educationForm; }
+            set { educationForm = value; }
+        }
+        public int GroupNumber
+        {
+            get { return groupNumber; }
+            set
+            {
+                if (value <= 100 || value > 599)
+                {
+                    throw new ArgumentOutOfRangeException("Group number must be between 101 and 599.");
+                }
+                groupNumber = value;
+            }
+        }
+        public Exam[] Exams
+        {
+            get { return exams; }
+            set { exams = value; }
+        }
+        // comment it if you want additional task is working
+        public IEnumerator GetEnumerator()
+        {
+            foreach (object item in tests)
+            {
+                yield return item;
+            }
+            foreach (object item in exams)
+            {
+                yield return item;
+            }
+        }
+        // ==================================
+        public IEnumerable<Exam> GetExamsWithGradeGreaterThan(int grade)
+        {
+            foreach (Exam exam in exams)
+            {
+                if (exam.grade > grade)
+                {
+                    yield return exam;
+                }
+            }
+        }
+
+        //additional task
+
+        //public IEnumerator GetEnumerator()
+        //{
+        //    return new StudentEnumerator(this);
+        //}
+
+        //public IEnumerable<object> GetPassedExamsAndTests()
+        //{
+        //    foreach (var item in tests)
+        //    {
+        //        if (item is Test test && test.Passed)
+        //        {
+        //            yield return item;
+        //        }
+        //    }
+
+        //    foreach (var item in exams)
+        //    {
+        //        if (item.grade > 2)
+        //        {
+        //            yield return item;
+        //        }
+        //    }
+        //}
+
+        //public IEnumerable<Exam> GetPassedExams()
+        //{
+        //    foreach (var exam in exams)
+        //    {
+        //        if (exam.grade > 2)
+        //        {
+        //            yield return exam;
+        //        }
+        //    }
+        //}
+
+        //private class StudentEnumerator : IEnumerator
+        //{
+        //    private readonly Student student;
+        //    private int position = -1;
+
+        //    public StudentEnumerator(Student student)
+        //    {
+        //        this.student = student;
+        //    }
+
+        //    public bool MoveNext()
+        //    {
+        //        position++;
+        //        return position < student.tests.Count + student.exams.Length;
+        //    }
+
+        //    public void Reset()
+        //    {
+        //        position = -1;
+        //    }
+
+        //    public object Current
+        //    {
+        //        get
+        //        {
+        //            if (position < student.tests.Count)
+        //            {
+        //                return student.tests[position];
+        //            }
+        //            else if (position < student.tests.Count + student.exams.Length)
+        //            {
+        //                return student.exams[position - student.tests.Count];
+        //            }
+        //            else
+        //            {
+        //                throw new InvalidOperationException();
+        //            }
+        //        }
+        //    }
+        //}
+        public double AverGrade
+        {
+            get
+            {
+                if (exams.Length == 0)
+                {
+                    return 0;
+                }
+                double sum = 0;
+                for (int i = 0; i < exams.Length; i++)
+                {
+                    sum += exams[i].grade;
+                }
+                return sum / exams.Length;
+            }
+        }
+        public bool this[Education education]
+        {
+            get { return educationForm == education; }
+        }
+        public void AddExams(params Exam[] exams)
+        {
+            this.exams = exams;
+        }
+        public void AddTest(Test test)
+        {
+            tests.Add(test);
+        }
+        public override string ToString()
+        {
+            string testsString = "";
+            foreach (Test test in tests)
+            {
+                testsString += test.ToString() + '\n';
+            }
+
+            string examsString = "";
+            foreach (Exam exam in exams)
+            {
+                examsString += exam.ToString() + '\n';
+            }
+
+            return $"{base.ToString()}\nEducation Form: {educationForm}\nGroup Number: {groupNumber}\nTests:\n{testsString}\nExams:\n{examsString}";
+        }
+        public override string ToShortString()
+        {
+            return $"{studentData.ToShortString()}\nEducation Form: {educationForm}\nGroup Number: {groupNumber}\nAverage Grade: {AverGrade}";
+        }
+    }
+    class Exam
+    {
+        public string subject;
+        public int grade;
+        public System.DateTime examDate;
+        public Exam(string subject, int grade, DateTime date)
+        {
+            this.subject = subject;
+            this.grade = grade;
+            this.examDate = date;
+        }
+        //РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ  
+        public Exam() : this("Default Subject", 0, DateTime.Now)
+        {
+        }
+        //override
+        public override string ToString()
+        {
+            return $"Subject: {subject}\nGrade: {grade}\nDate: {examDate}";
+        }
+    }
+    class Test
+    {
+        public string Subject { get; set; }
+        public bool Passed { get; set; }
+
+        public Test(string subject, bool passed)
+        {
+            Subject = subject;
+            Passed = passed;
+        }
+
+        public Test() : this("Default Subject", false)
+        {
+        }
+
+        public override string ToString()
+        {
+            return $"Subject: {Subject}\nPassed: {Passed}";
+        }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Student student = new Student();
+            Stopwatch stopwatch = new Stopwatch();
+            Console.WriteLine(student.ToShortString());
+            Console.WriteLine(student[Education.SecondEducation]);
+            Console.WriteLine(student[Education.Bachelor]);
+            Console.WriteLine(student[Education.Specialist]);
+            Console.WriteLine();
+            student.StudentData = new Person("Ivan", "Petrov", new DateTime(1990, 1, 1));
+            student.Education = Education.SecondEducation;
+            student.GroupNumber = 126;
+            Console.WriteLine();
+            student.AddExams(
+                    new Exam("Math", 80, new DateTime(2023, 9, 20)),
+                    new Exam("Physics", 70, new DateTime(2023, 9, 18)),
+                    new Exam("IT", 95, DateTime.Now));
+            Console.WriteLine(student.ToString());
+            Console.WriteLine();
+            //Console.WriteLine("Р’РІРµРґРёС‚Рµ nrow Рё ncolumn (РІ РєР°С‡РµСЃС‚РІРµ СЂР°Р·РґРµР»РёС‚РµР»РµР№ РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ ' ' РёР»Рё '/'): ");
+            //string line = Console.ReadLine();
+            //int nrow = Convert.ToInt32(line.Split(' ', '/')[0]);
+            //int ncolumn = Convert.ToInt32(line.Split(' ', '/')[1]);
+
+            //Exam[] exams1 = new Exam[nrow * ncolumn];
+            //Exam e1 = new Exam("Russian", 4, new DateTime(2023, 6, 9));
+            //stopwatch.Start();
+            //for (int i = 0; i < nrow * ncolumn; i++)
+            //{
+            //    exams1[i] = e1;
+            //}
+            //stopwatch.Stop();
+            //Console.WriteLine("Р”РѕР±Р°РІР»РµРЅРёРµ СЌР»РµРјРµРЅС‚РѕРІ РІ РѕРґРЅРѕРјРµСЂРЅРѕРј РјР°СЃСЃРёРІРµ:" + stopwatch.ElapsedMilliseconds);
+
+            //Exam[,] exams2 = new Exam[nrow, ncolumn];
+            //stopwatch.Restart();
+            //for (int i = 0; i < nrow; i++)
+            //{
+            //    for (int j = 0; j < ncolumn; j++)
+            //    {
+            //        exams2[i, j] = e1;
+            //    }
+            //}
+            //stopwatch.Start();
+            //for (int i = 0; i < nrow; i++)
+            //{
+            //    for (int j = 0; j < ncolumn; j++)
+            //    {
+            //        exams2[i, j].examDate = new DateTime(2023, 9, 10);
+            //        exams2[i, j].grade = 3;
+            //        exams2[i, j].subject = "PE";
+            //    }
+            //}
+            //stopwatch.Stop();
+            //Console.WriteLine("Р”РѕР±Р°РІР»РµРЅРёРµ СЌР»РµРјРµРЅС‚РѕРІ РІ РґРІСѓРјРµСЂРЅРѕРј РјР°СЃСЃРёРІРµ: " + stopwatch.ElapsedMilliseconds);
+
+            //Exam[][] exams3 = new Exam[nrow][];
+            //for (int i = 0; i < nrow - 1; i++)
+            //{
+            //    exams3[i] = new Exam[1];
+            //}
+            //exams3[nrow - 1] = new Exam[ncolumn * nrow - (nrow - 1)];
+            //for (int i = 0; i < exams3.Length; i++)
+            //{
+            //    for (int j = 0; j < exams3[i].Length; j++)
+            //    {
+            //        exams3[i][j] = e1;
+            //    }
+            //}
+            //stopwatch.Start();
+            //for (int i = 0; i < exams3.Length; i++)
+            //{
+            //    for (int j = 0; j < exams3[i].Length; j++)
+            //    {
+            //        exams3[i][j].examDate = new DateTime(2023, 9, 10);
+            //        exams3[i][j].grade = 3;
+            //        exams3[i][j].subject = "PE";
+            //    }
+            //}
+            //stopwatch.Stop();
+            //Console.WriteLine("Р”РѕР±Р°РІР»РµРЅРёРµ СЌР»РµРјРµРЅС‚РѕРІ РІ СЃС‚СѓРїРµРЅС‡Р°С‚СѓСЋ РјР°С‚СЂРёС†Сѓ:" + stopwatch.ElapsedMilliseconds);
+            //Console.WriteLine();
+            Console.WriteLine("Iterating over all elements:");
+            foreach (object item in student)
+            {
+                Console.WriteLine(item.ToString());
+            }
+            Console.WriteLine();
+            Console.WriteLine("Iterating over exams with grade greater than 80:");
+            foreach (Exam exam in student.GetExamsWithGradeGreaterThan(80))
+            {
+                Console.WriteLine(exam.ToString());
+            }
+            Console.WriteLine();
+
+            //additional task. Need to remove some of code
+            //Console.WriteLine("All exams and tests:");
+            //foreach (var item in student)
+            //{
+            //    Console.WriteLine(item);
+            //}
+
+            //Console.WriteLine("Passed exams and tests:");
+            //foreach (var item in student.GetPassedExamsAndTests())
+            //{
+            //    Console.WriteLine(item);
+            //}
+
+            //Console.WriteLine("Passed exams:");
+            //foreach (var exam in student.GetPassedExams())
+            //{
+            //    Console.WriteLine(exam);
+            //}
+            Console.WriteLine();
+            Person person1 = new Person("John", "Doe", new DateTime(1990, 1, 1));
+            Person person2 = new Person("John", "Doe", new DateTime(1990, 1, 1));
+
+            Console.WriteLine("Reference Equality: " + ReferenceEquals(person1, person2));
+            Console.WriteLine("Object Equality: " + (person1 == person2));
+            Console.WriteLine("Hash Code of person1: " + person1.GetHashCode());
+            Console.WriteLine("Hash Code of person2: " + person2.GetHashCode());
+            //additional task (coment 'Student student = ...' above)
+            //Student student = new Student(new Person("Ivan", "Petrov", new DateTime(1990, 1, 1)), Education.Bachelor, 1);
+            //student.AddExams(
+            //    new Exam("Math", 80, new DateTime(2023, 9, 20)),
+            //    new Exam("Physics", 70, new DateTime(2023, 9, 18)),
+            //    new Exam("IT", 95, DateTime.Now));
+            //Console.WriteLine(student.ToString());
+            Console.WriteLine();
+            Person studentPerson = student.StudentData;
+            Console.WriteLine(studentPerson.ToShortString());
+            Student studentCopy = (Student)student.DeepCopy();
+            student.Name = "New Name";
+            student.Birthdate = new DateTime(1995, 1, 1);
+
+            Console.WriteLine("Original Student:");
+            Console.WriteLine(student.ToShortString());
+            Console.WriteLine("Copied Student:");
+            Console.WriteLine(studentCopy.ToShortString());
+
+            /* Additional task
+             * 
+             * Console.WriteLine("All exams and tests:");
+                foreach (var item in student)
+                {
+                    Console.WriteLine(item);
+                }
+
+                Console.WriteLine("Passed exams and tests:");
+                foreach (var item in student.GetPassedExamsAndTests())
+                {
+                    Console.WriteLine(item);
+                }
+
+                Console.WriteLine("Passed exams:");
+                foreach (var exam in student.GetPassedExams())
+                {
+                    Console.WriteLine(exam);
+                }
+             */
+
+            // 5)
+            //1 variant
+            
+        }
+    }
+}

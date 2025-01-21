@@ -1,0 +1,317 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace Lab1
+{
+    enum Education
+    {
+        Specialist,
+        Bachelor,
+        SecondEducation
+    }
+
+    class Person
+    {
+        private string _firstName;
+        private string _lastName;
+        private DateTime _birthdate;
+
+        public Person(string firstName, string lastName, DateTime birthdate)
+        {
+            _firstName = firstName;
+            _lastName = lastName;
+            _birthdate = birthdate;
+        }
+
+        public string Name
+        {
+            get { return _firstName; }
+            set { _firstName = value; }
+        }
+
+        public string Surname
+        {
+            get { return _lastName; }
+            set { _lastName = value; }
+        }
+
+        public DateTime Birthdate
+        {
+            get { return _birthdate; }
+            set { _birthdate = value; }
+        }
+
+        public int BirthYear
+        {
+            get { return _birthdate.Year; }
+            set { _birthdate = new DateTime(value, _birthdate.Month, _birthdate.Day); }
+        }
+
+        public override string ToString()
+        {
+            return $"Name: {_firstName}\nSurname: {_lastName}\nBirthdate: {_birthdate}";
+        }
+
+        public virtual string ToShortString()
+        {
+            return $"Name: {_firstName}\nSurname: {_lastName}";
+        }
+    }
+
+    class Exam
+    {
+        public string _subject;
+        public int _grade;
+        public System.DateTime _examDate;
+
+        public Exam(string subject, int grade, DateTime date)
+        {
+            _subject = subject;
+            _grade = grade;
+            _examDate = date;
+        }
+
+        public Exam() : this("Default Subject", 0, DateTime.Now)
+        {
+        }
+
+        public override string ToString()
+        {
+            return $"Subject: {_subject}\nGrade: {_grade}\nDate: {_examDate}";
+        }
+    }
+
+    class Student
+    {
+        private Person _studentData;
+        private Education _educationForm;
+        private int _groupNumber;
+        private Exam[] _exams = new Exam[0];
+
+        public Student(Person studentData, Education educationForm, int groupNumber)
+        {
+            _studentData = studentData;
+            _educationForm = educationForm;
+            _groupNumber = groupNumber;
+        }
+
+        public Student() : this(new Person("Name", "Surname", DateTime.Now), Education.Bachelor, 1)
+        {
+        }
+
+        public Person StudentData
+        {
+            get { return _studentData; }
+            set { _studentData = value; }
+        }
+
+        public Education Education
+        {
+            get { return _educationForm; }
+            set { _educationForm = value; }
+        }
+
+        public int GroupNumber
+        {
+            get { return _groupNumber; }
+            set { _groupNumber = value; }
+        }
+
+        public Exam[] Exams
+        {
+            get { return _exams; }
+            set { _exams = value; }
+        }
+
+        public double AverGrade
+        {
+            get
+            {
+                if (_exams.Length == 0)
+                {
+                    return 0;
+                }
+                double sum = 0;
+                for (int i = 0; i < _exams.Length; i++)
+                {
+                    sum += _exams[i]._grade;
+                }
+                return sum / _exams.Length;
+            }
+        }
+
+        public bool this[Education education]
+        {
+            get { return _educationForm == education; }
+        }
+
+        public void AddExams(params Exam[] exams)
+        {
+            _exams = exams;
+        }
+
+        public override string ToString()
+        {
+            string examsString = "";
+            foreach (Exam exam in _exams)
+            {
+                examsString += exam.ToString() + '\n';
+            }
+            return $"{_studentData.ToString()}\nEducation Form: {_educationForm}\nGroup Number: {_groupNumber}\nExams:\n{examsString}";
+        }
+
+        public virtual string ToShortString()
+        {
+            return $"{_studentData.ToShortString()}\nEducation Form: {_educationForm}\nGroup Number: {_groupNumber}\nAverage Grade: {AverGrade}";
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Создание объекта Student и вывод краткой информации
+            Student student = new Student();
+            Console.WriteLine(student.ToShortString());
+
+            // Проверка формы обучения
+            Console.WriteLine(student[Education.SecondEducation]);
+            Console.WriteLine(student[Education.Bachelor]);
+            Console.WriteLine(student[Education.Specialist]);
+            Console.WriteLine();
+
+            student.StudentData = new Person("Ivan", "Petrov", new DateTime(1990, 1, 1));
+            student.Education = Education.SecondEducation;
+            student.GroupNumber = 26;
+            student.AddExams(
+                new Exam("Math", 80, new DateTime(2023, 9, 20)),
+                new Exam("Physics", 70, new DateTime(2023, 9, 18)),
+                new Exam("IT", 95, DateTime.Now));
+            Console.WriteLine(student.ToString());
+
+            // 5) Тестирование производительности массивов
+            int numExams = 1000;
+            Stopwatch stopwatch = new Stopwatch();
+
+            // Одномерный массив
+            Exam[] exams1D = new Exam[numExams];
+            stopwatch.Start();
+            for (int i = 0; i < numExams; i++)
+            {
+                exams1D[i] = new Exam($"Exam{i}", 90, new DateTime(2023, 10, 5));
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Добавление элементов в одномерный массив: {stopwatch.ElapsedMilliseconds} ms");
+
+            // Двумерный массив
+            Exam[,] exams2D = new Exam[numExams, 1];
+            stopwatch.Restart();
+            for (int i = 0; i < numExams; i++)
+            {
+                exams2D[i, 0] = new Exam($"Exam{i}", 90, new DateTime(2023, 10, 5));
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Добавление элементов в прямоугольную матрицу: {stopwatch.ElapsedMilliseconds} ms");
+
+            // Ступенчатый массив
+            Exam[][] examsJagged = new Exam[numExams][];
+            stopwatch.Restart();
+            for (int i = 0; i < numExams; i++)
+            {
+                examsJagged[i] = new Exam[] { new Exam($"Exam{i}", 90, new DateTime(2023, 10, 5)) };
+            }
+            stopwatch.Stop();
+
+            stopwatch.Start();
+            for (int i = 0; i < numExams; i++)
+            {
+                for (int j = 0; j < examsJagged[i].Length; j++)
+                {
+                    examsJagged[i][j]._examDate = new DateTime(2023, 10, 5);
+                    examsJagged[i][j]._subject = "Math";
+                    examsJagged[i][j]._grade = 90;
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine("Добавление элементов в ступенчатую матрицу:" + stopwatch.ElapsedMilliseconds);
+            Console.ReadLine();
+
+            // Второй вариант тестирования производительности
+            Console.WriteLine("Введите nrow и ncolumn (в качестве разделителей можно использовать ' ' или '/'): ");
+            String line = Console.ReadLine();
+            int nrow = Convert.ToInt32(line.Split(' ', '/')[0]);
+            int ncolumn = Convert.ToInt32(line.Split(' ', '/')[1]);
+
+            // Одномерный массив
+            Exam[] exams1 = new Exam[nrow * ncolumn];
+            Exam e1 = new Exam("Russian", 4, new DateTime(2023, 6, 9));
+            stopwatch.Start();
+            for (int i = 0; i < nrow * ncolumn; i++)
+            {
+                exams1[i] = e1;
+            }
+            stopwatch.Stop();
+            Console.WriteLine("Добавление элементов в одномерный массив:" + stopwatch.ElapsedMilliseconds);
+
+            // Двумерный массив
+            Exam[,] exams2 = new Exam[nrow, ncolumn];
+            stopwatch.Restart();
+            for (int i = 0; i < nrow; i++)
+            {
+                for (int j = 0; j < ncolumn; j++)
+                {
+                    exams2[i, j] = e1;
+                }
+            }
+            stopwatch.Start();
+            for (int i = 0; i < nrow; i++)
+            {
+                for (int j = 0; j < ncolumn; j++)
+                {
+                    exams2[i, j]._examDate = new DateTime(2023, 9, 10);
+                    exams2[i, j]._grade = 3;
+                    exams2[i, j]._subject = "PE";
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine("Добавление элементов в двумерный массив: " + stopwatch.ElapsedMilliseconds);
+
+            // Ступенчатый массив
+            Exam[][] exams3 = new Exam[nrow][];
+            for (int i = 0; i < nrow - 1; i++)
+            {
+                exams3[i] = new Exam[1];
+            }
+            exams3[nrow - 1] = new Exam[ncolumn * nrow - (nrow - 1)];
+            for (int i = 0; i < exams3.Length; i++)
+            {
+                for (int j = 0; j < exams3[i].Length; j++)
+                {
+                    exams3[i][j] = e1;
+                }
+            }
+            stopwatch.Start();
+            for (int i = 0; i < exams3.Length; i++)
+            {
+                for (int j = 0; j < exams3[i].Length; j++)
+                {
+                    exams3[i][j]._examDate = new DateTime(2023, 9, 10);
+                    exams3[i][j]._grade = 3;
+                    exams3[i][j]._subject = "PE";
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine("Добавление элементов в ступенчатую матрицу:" + stopwatch.ElapsedMilliseconds);
+            Console.ReadLine();
+        }
+    }
+}
