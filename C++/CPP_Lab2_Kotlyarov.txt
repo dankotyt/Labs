@@ -1,0 +1,231 @@
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <string>
+#include <sstream>
+
+#define _CRT_SECURE_NO_WARNINGS
+
+using namespace std;
+
+class bank {
+    friend void addNewDeposit(bank* bank_list, int& n);
+    friend void depositInfo(bank dep);
+    friend void findDepositsByClient(bank* bank_list, int n, string name, string surname);
+    friend void writeDataToFile(bank* bank_list, int n);
+    friend int main();
+public:
+    int accountNumber;
+    double balance;
+    struct dateOpened {
+        int day;
+        char* month;
+        int year;
+    } dateOpened;
+private:
+    char* name;
+    char* surname;
+};
+
+void addNewDeposit(bank* bank_list, int& n) {
+
+    int accountNumber, day, year;
+    char* month = new char[10];
+    char* name = new char[100];
+    char* surname = new char[100];
+    double balance;
+
+    cout << "Enter account number: ";
+    cin >> accountNumber;
+    cout << "Enter name: ";
+    cin >> name;
+    cout << "Enter surname: ";
+    cin >> surname;
+    cout << "Enter balance: ";
+    cin >> balance;
+    cout << "Enter date opened (day, month, year): ";
+    cin >> day >> month >> year;
+
+    bank_list[n].accountNumber = accountNumber;
+    bank_list[n].name = name;
+    bank_list[n].surname = surname;
+    bank_list[n].balance = balance;
+    bank_list[n].dateOpened.day = day;
+    bank_list[n].dateOpened.month = month;
+    bank_list[n].dateOpened.year = year;
+    n++;
+}
+
+void depositInfo(bank dep) {
+    cout << dep.accountNumber << "\t\t" << dep.name << " " << dep.surname << "\t" << dep.balance << "\t\t" << dep.dateOpened.day << " " << dep.dateOpened.month << " " << dep.dateOpened.year << endl;
+}
+
+void printDeposits(bank* bank_list, int n) {
+    cout << "Account Number\tName Surname\tAmount\t\tDate Opened" << endl;
+    for (int i = 0; i < n; i++) {
+        depositInfo(bank_list[i]);
+    }
+}
+
+//void greaterThan(bank* bank_list, int n, double balance) {
+//    cout << "Deposits with balance greater than " << balance << endl;
+//    cout << "Account Number\tName Surname\tAmount\tDate Opened" << endl;
+//    for (int i = 0; i < n; i++) {
+//        if (bank_list[i].balance > balance) {
+//            depositInfo(bank_list[i]);
+//        }
+//    }
+//}
+void greaterThan(bank* bank_list, int n, double balance) {
+    cout << "Deposits with balance greater than " << balance << endl;
+    cout << "Account Number\tName Surname\tAmount\tDate Opened" << endl;
+    for (int i = 0; i < n; i++) {
+        if (bank_list[i].balance > balance) {
+            depositInfo(bank_list[i]);
+        }
+    }
+    ifstream in("deposits.txt");
+    if (in.is_open()) {
+        string line;
+        while (getline(in, line))
+        {
+            // РџСЂРѕРІРµСЂРєР° Р·РЅР°С‡РµРЅРёСЏ РёР· С„Р°Р№Р»Р°
+            int accountNumber;
+            string name;
+            string surname;
+            double balance;
+            int day, month, year;
+
+            istringstream iss(line);
+            iss >> accountNumber >> name >> surname >> balance >> day >> month >> year;
+
+            if (balance > balance) {
+                cout << line << endl;
+            }
+        }
+    }
+    else {
+        cout << "Error opening file or no info" << endl;
+    }
+    in.close();
+}
+
+void findDepositsByClient(bank* bank_list, int n, string name, string surname) {
+    bank* results;
+    results = new bank[n];
+    int count = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (strcmp(bank_list[i].name, name.c_str()) == 0 && strcmp(bank_list[i].surname, surname.c_str()) == 0) {
+            results[count] = bank_list[i];
+            count++;
+        }
+    }
+    if (count == 0) {
+        cout << "No deposits found for client " << name << " " << surname << endl;
+    }
+    else {
+        cout << "Deposits for client " << name << " " << surname << endl;
+        cout << "Account Number\tName Surname\tBalance\tDate Opened" << endl;
+        for (int i = 0; i < count; i++) {
+            depositInfo(results[i]);
+        }
+    }
+    delete[] results;
+}
+
+void writeDataToFile(bank* bank_list, int n) {
+    ofstream out("deposits.txt", ios::out | ios::app);
+    for (int i = 0; i < n; i++) {
+        out << bank_list[i].accountNumber << "\t\t" << bank_list[i].name << " " << bank_list[i].surname << "\t" << bank_list[i].balance << "\t\t" << bank_list[i].dateOpened.day << " " << bank_list[i].dateOpened.month << " " << bank_list[i].dateOpened.year << endl;
+    }
+    out.close();
+    delete[] bank_list;
+    exit(0);
+}
+
+int main() {
+    string line;
+    string name;
+    string surname;
+    int choice = 0;
+    int n = 0;
+    double balance = 0.0;
+    bank* bank_list = new bank[100];
+    while (true) {
+        cout << "\n";
+        cout << "1. Add new deposit." << endl;
+        cout << "2. Print all deposits." << endl;
+        cout << "3. Print deposits with balance greater than." << endl;
+        cout << "4. Find deposits by client." << endl;
+        cout << "5. Exit." << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            addNewDeposit(bank_list, n);
+            break;
+        case 2: {
+            ifstream in("deposits.txt");
+            if (in.is_open()) {
+                printDeposits(bank_list, n);
+                while (getline(in, line))
+                {
+                    cout << line << "\t\t" << endl;
+                }
+            }
+            else {
+                cout << "Error opening file or no info" << endl;
+                printDeposits(bank_list, n);
+            }
+            in.close();
+            break;
+        }
+        /*case 3: {
+            cout << "Enter balance: ";
+            cin >> balance;
+            ifstream in("deposits.txt");
+            if (in.is_open()) {
+                greaterThan(bank_list, n, balance);
+                while (getline(in, line))
+                {
+                    cout << line << "\t\t" << endl;
+                }
+            }
+            else {
+                cout << "Error opening file or no info" << endl;
+
+            }
+            in.close();
+            break;
+        }*/
+        case 3: {
+            cout << "Enter balance: ";
+            cin >> balance;
+            greaterThan(bank_list, n, balance);
+            break;
+        }
+        case 4: {
+            cin.ignore();
+            cout << "Enter client`s name: ";
+            //cin >> name;
+            getline(cin, name); // consume newline character
+            cout << "Enter client`s surname: ";
+            //cin >> surname;
+            getline(cin, surname);
+            findDepositsByClient(bank_list, n, name, surname);
+            break;
+        }
+        case 5:
+            writeDataToFile(bank_list, n);
+            break;
+        default:
+            cout << "Invalid choice, please try again." << endl;
+            if (choice == 5) {
+                break;
+            }
+        }
+    }
+    return 0;
+}
